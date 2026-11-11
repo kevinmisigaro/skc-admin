@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
+  IdCard,
   Users,
   Ticket,
   ClipboardList,
@@ -17,6 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 const links = [
   { href: "/", label: "Overview", icon: LayoutDashboard, exact: true },
   { href: "/events", label: "Events", icon: CalendarDays },
+  { href: "/members", label: "Members", icon: IdCard },
   { href: "/influencers", label: "Influencers", icon: Users },
   { href: "/codes", label: "Referral Codes", icon: Ticket },
   { href: "/redemptions", label: "Ticket Orders", icon: ClipboardList },

@@ -11,6 +11,14 @@ export type EmailStatus = "pending" | "sent" | "failed";
 export type EventStatus = "upcoming" | "past";
 export type AdminRole = "platform_admin" | "event_manager" | "moderator" | "quest_staff";
 export type PaymentStatus = "pending" | "paid" | "failed" | "cancelled";
+export type MemberRole =
+  | "fan"
+  | "parent_guardian"
+  | "creator"
+  | "competitor"
+  | "vendor"
+  | "instructor"
+  | "influencer";
 
 export interface Database {
   public: {
@@ -163,6 +171,35 @@ export interface Database {
           created_at?: string;
         };
         Update: Partial<Database["public"]["Tables"]["events"]["Insert"]>;
+        Relationships: [];
+      };
+      // One row per auth.users member who finished profile setup on the
+      // public site (0002_profiles_and_quest.sql). Email lives on
+      // auth.users, not here — see getMembers() in lib/data/admin.ts.
+      profiles: {
+        Row: {
+          id: string;
+          display_name: string;
+          role: MemberRole;
+          bio: string | null;
+          interests: string[];
+          details: unknown;
+          marketing_opt_in: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id: string;
+          display_name: string;
+          role?: MemberRole;
+          bio?: string | null;
+          interests?: string[];
+          details?: unknown;
+          marketing_opt_in?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["profiles"]["Insert"]>;
         Relationships: [];
       };
       fan_passes: {

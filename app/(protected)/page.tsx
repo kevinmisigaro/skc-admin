@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Users, Ticket, CheckCircle2, CalendarDays } from "lucide-react";
+import { Users, Ticket, CheckCircle2, CalendarDays, IdCard } from "lucide-react";
 import { getDashboardStats } from "@/lib/data/admin";
 
 export const metadata: Metadata = { title: "Admin Overview" };
@@ -16,6 +16,14 @@ export default async function AdminOverviewPage() {
       icon: CalendarDays,
       color: "bg-action-orange",
       href: "/events",
+    },
+    {
+      label: "Members",
+      value: stats.totalMembers,
+      sub: "Registered on the site",
+      icon: IdCard,
+      color: "bg-comic-red",
+      href: "/members",
     },
     {
       label: "Influencers",
@@ -50,7 +58,7 @@ export default async function AdminOverviewPage() {
         Referral-code pilot status for SKC Reloaded / Tanzanite.
       </p>
 
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {cards.map(({ label, value, sub, icon: Icon, color, href }) => (
           <Link
             key={label}

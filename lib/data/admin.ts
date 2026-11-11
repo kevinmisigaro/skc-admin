@@ -1,5 +1,6 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface DashboardStats {
   totalInfluencers: number;
@@ -12,6 +13,7 @@ export interface DashboardStats {
   paidOrders: number;
   totalEvents: number;
   publishedEvents: number;
+  totalMembers: number;
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -28,6 +30,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     paidOrders,
     events,
     publishedEvents,
+    members,
   ] = await Promise.all([
     supabase.from("influencers").select("id", { count: "exact", head: true }),
     supabase
@@ -57,6 +60,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .from("events")
       .select("id", { count: "exact", head: true })
       .eq("is_published", true),
+    supabase.from("profiles").select("id", { count: "exact", head: true }),
   ]);
 
   return {
@@ -70,6 +74,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     paidOrders: paidOrders.count ?? 0,
     totalEvents: events.count ?? 0,
     publishedEvents: publishedEvents.count ?? 0,
+    totalMembers: members.count ?? 0,
   };
 }
 
@@ -111,4 +116,44 @@ export async function getEvents() {
     .order("event_date", { ascending: false });
   if (error) throw error;
   return data;
+}
+
+export interface MemberRow {
+  id: string;
+  display_name: string;
+  role: string;
+  bio: string | null;
+  marketing_opt_in: boolean;
+  created_at: string;
+  email: string | null;
+}
+
+// Site registrations (public/profiles) — email lives on auth.users, which
+// PostgREST doesn't expose, so it's looked up separately via the Admin API
+// (service-role only) and joined in here by id.
+export async function getMembers(): Promise<MemberRow[]> {
+  const supabase = await createClient();
+  const { data: profiles, error } = await supabase
+    .from("profiles")
+    .select("id, display_name, role, bio, marketing_opt_in, created_at")
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+
+  const admin = createAdminClient();
+  const emailById = new Map<string, string>();
+  let page = 1;
+  while (true) {
+    const { data: usersPage, error: listError } = await admin.auth.admin.listUsers({
+      page,
+      perPage: 1000,
+    });
+    if (listError || usersPage.users.length === 0) break;
+    for (const u of usersPage.users) {
+      if (u.email) emailById.set(u.id, u.email);
+    }
+    if (usersPage.users.length < 1000) break;
+    page++;
+  }
+
+  return profiles.map((p) => ({ ...p, email: emailById.get(p.id) ?? null }));
 }
